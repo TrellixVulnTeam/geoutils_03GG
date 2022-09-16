@@ -42,7 +42,16 @@ class TestSatelliteImage:
         img3 = si.SatelliteImage(r)
         assert isinstance(img3, si.SatelliteImage)
 
-        assert img == img2 == img3
+        assert np.logical_and.reduce(
+            (
+                geoutils.misc.array_equal(img.data, img2.data, equal_nan=True),
+                geoutils.misc.array_equal(img2.data, img3.data, equal_nan=True),
+            )
+        )
+
+        assert np.logical_and.reduce(
+            (np.all(img.data.mask == img2.data.mask), np.all(img2.data.mask == img3.data.mask))
+        )
 
     @pytest.mark.parametrize("example", [landsat_b4, aster_dem])  # type: ignore
     def test_silent(self, example: str) -> None:
@@ -140,14 +149,14 @@ class TestSatelliteImage:
             assert r.__getattribute__(attr) == r2.__getattribute__(attr)
 
         # Check data array
-        assert np.array_equal(r.data, r2.data, equal_nan=True)
+        assert geoutils.misc.array_equal(r.data, r2.data, equal_nan=True)
 
         # Check dataset_mask array
-        assert np.array_equal(r.data.mask, r2.data.mask)
+        assert np.all(r.data.mask == r2.data.mask)
 
         # Check that if r.data is modified, it does not affect r2.data
         r.data += 5
-        assert not np.array_equal(r.data, r2.data, equal_nan=True)
+        assert not geoutils.misc.array_equal(r.data, r2.data, equal_nan=True)
 
     def test_filename_parsing(self) -> None:
 
